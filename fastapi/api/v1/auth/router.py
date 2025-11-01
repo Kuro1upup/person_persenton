@@ -52,7 +52,7 @@ async def auth_with_token(
             raise HTTPException(status_code=401, detail="Invalid token: missing API Key")
         
         # 验证角色是否有效
-        if role not in available_roles:
+        if role == "free":
             raise HTTPException(status_code=401, detail=f"Invalid token: unsupported role '{role}'")
         
         # 为用户创建会话ID
