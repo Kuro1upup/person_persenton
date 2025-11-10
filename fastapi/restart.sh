@@ -3,7 +3,7 @@
 # 定义虚拟环境目录路径
 VENV_DIR="myenv"
 # 定义服务端口
-PORT=9202
+PORT=9204
 # 定义日志文件路径
 LOG_DIR="logs"
 LOG_FILE="${LOG_DIR}/presonton.log"

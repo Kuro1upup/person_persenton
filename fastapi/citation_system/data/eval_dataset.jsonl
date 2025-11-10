@@ -1,0 +1,5 @@
+{"query": "如何重置密码", "relevant_docs": ["1"], "expected_answer": "访问登录页面，点击忘记密码，输入邮箱，检查邮件中的链接，设置新密码。"}
+{"query": "API 基础 URL 是什么", "relevant_docs": ["2"], "expected_answer": "API 基础 URL 是 https://api.example.com/v1"}
+{"query": "如何保护账户安全", "relevant_docs": ["3", "1"], "expected_answer": "定期更改密码，使用强密码，启用双因素认证。"}
+{"query": "密码应该包含什么", "relevant_docs": ["1", "3"], "expected_answer": "密码应该至少包含 8 个字符，包括大小写字母、数字和特殊符号。"}
+{"query": "API 认证方式", "relevant_docs": ["2"], "expected_answer": "需要 Bearer Token 认证"}

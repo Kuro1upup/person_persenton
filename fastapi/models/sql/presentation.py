@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 import uuid
 from sqlalchemy import JSON, Column, DateTime, String
 from sqlmodel import Boolean, Field, SQLModel
@@ -45,6 +45,8 @@ class PresentationModel(SQLModel, table=True):
     outline_model: Optional[dict] = Field(sa_column=Column(JSON), default=None)
     presentation_model: Optional[dict] = Field(sa_column=Column(JSON), default=None)
     image_model: Optional[dict] = Field(sa_column=Column(JSON), default=None)
+    tavily_search_results_json: Optional[dict] = Field(sa_column=Column(JSON), default=None)
+    reference_markers: Optional[List[Dict[str, Any]]] = Field(sa_column=Column(JSON), default=None)
 
     def get_new_presentation(self):
         return PresentationModel(
@@ -66,6 +68,8 @@ class PresentationModel(SQLModel, table=True):
             outline_model=self.outline_model,
             presentation_model=self.presentation_model,
             image_model=self.image_model,
+            tavily_search_results_json=self.tavily_search_results_json,
+            reference_markers=self.reference_markers,
         )
 
     def get_presentation_outline(self):
@@ -86,3 +90,15 @@ class PresentationModel(SQLModel, table=True):
 
     def set_structure(self, structure: PresentationStructureModel):
         self.structure = structure.model_dump()
+
+    def set_tavily_search_results_json(self, tavily_search_results_json: dict):
+        self.tavily_search_results_json = tavily_search_results_json
+
+    def set_reference_markers(self, reference_markers: dict):
+        self.reference_markers = reference_markers
+
+    def get_tavily_search_results_json(self):
+        return self.tavily_search_results_json
+
+    def get_reference_markers(self):
+        return self.reference_markers

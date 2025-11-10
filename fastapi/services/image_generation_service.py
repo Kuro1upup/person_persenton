@@ -48,7 +48,8 @@ class ImageGenerationService:
         print(f"Request - Generating Image for {image_prompt}")
 
         try:
-            image_path = await self._generate_image_google(image_prompt, self.output_directory)
+            # image_path = await self._generate_image_google(image_prompt, self.output_directory)
+            image_path = "/static/images/placeholder.jpg"
             print(f"Generated Image Path: {image_path}")
             if image_path:
                 if image_path.startswith("http"):

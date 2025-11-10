@@ -38,7 +38,7 @@ from utils.get_layout_by_name import get_layout_by_name
 from services.image_generation_service import ImageGenerationService
 from utils.dict_utils import deep_update
 from utils.export_utils import export_presentation
-from utils.llm_calls.generate_presentation_outlines import generate_ppt_outline
+from utils.llm_calls.generate_presentation_outlines import generate_ppt_outline, get_search_results_map
 from models.sql.slide import SlideModel
 from models.sse_response import SSECompleteResponse, SSEErrorResponse, SSEResponse
 
@@ -67,6 +67,9 @@ from utils.process_slides import (
     process_slide_and_fetch_assets,
 )
 import uuid
+from utils.citations import citations_instance
+import logging
+logging.basicConfig(level=logging.DEBUG)
 
 # 创建演示文稿相关的API路由器，前缀为/presentation，标签为Presentation
 PRESENTATION_ROUTER = APIRouter(prefix="/presentation", tags=["Presentation"])
@@ -380,6 +383,47 @@ async def prepare_presentation(
 
     return presentation
 
+async def add_reference_markers(presentation: PresentationModel, slides,api_key: str):
+    tavily_search_results_json = presentation.get_tavily_search_results_json()
+    search_content_map = tavily_search_results_json
+    source_embeddings,source_ids,source_contents,source_map = await citations_instance.get_source_embeddings_map(search_content_map,api_key)
+    # source_embeddings=[]  
+    reference_markers = []
+    slide_index=1
+    for  slide in slides:
+        slide_content = slide.content
+        slide_title = slide_content.get("title", "")  
+        reference_marker_index = await get_reference_marker(slide_title, source_embeddings,api_key)
+        if reference_marker_index != 0:
+            reference_markers.append({"slide_index":slide_index,"content":slide_title,"reference_marker_index":reference_marker_index})
+        slide_description = slide_content.get("bulletPoints") if "bulletPoints" in slide_content else slide_content.get("description", "")
+        if slide_description:
+            reference_marker_index = await get_reference_marker(str(slide_description), source_embeddings,api_key)
+            if reference_marker_index != 0:
+                reference_markers.append({"slide_index":slide_index,"content":str(slide_description),"reference_marker_index":reference_marker_index})
+
+        bulletPoints = slide_description if isinstance(slide_description, list) else slide_content.get("bulletPoints", [])
+        for bulletPoint in bulletPoints:
+            bulletPoint_title = bulletPoint.get("title", "")
+            reference_marker_index = await get_reference_marker(bulletPoint_title, source_embeddings,api_key)
+            if reference_marker_index!=0:
+                reference_markers.append({"slide_index":slide_index,"content":bulletPoint_title,"reference_marker_index":reference_marker_index})
+            bulletPoint_description = bulletPoint.get("description", "")
+            reference_marker_index = await get_reference_marker(bulletPoint_description, source_embeddings,api_key)
+            if reference_marker_index!=0:
+                reference_markers.append({"slide_index":slide_index,"content":bulletPoint_description,"reference_marker_index":reference_marker_index})
+        slide_index+=1
+    return reference_markers
+
+async def get_reference_marker(content: str,  source_embeddings:[],api_key: str):
+    reference_marker_index =0
+    if content:
+        similar_indexes, cosine_similarities, distances = await citations_instance.calculate_sentence_similarity(content, source_embeddings,api_key)
+        similarity_score = float(cosine_similarities[similar_indexes.index(similar_indexes[0])])
+        if similarity_score > 0.0001:
+                reference_marker_index=similar_indexes[0]
+        # reference_marker_index=random.randint(1,5)
+    return reference_marker_index
 
 @PRESENTATION_ROUTER.get("/stream/{id}", response_model=PresentationWithSlides)
 async def stream_presentation(
@@ -506,10 +550,17 @@ async def stream_presentation(
         sql_session.add_all(slides)
         sql_session.add_all(generated_assets)
         await sql_session.commit()
-
+        
+        reference_markers = await add_reference_markers(presentation, slides,api_key)
+        presentation.set_reference_markers(reference_markers)
+        await sql_session.commit()
+        logging.info(f"Reference markers: {reference_markers}")
+        tavily_search_results_json = presentation.get_tavily_search_results_json()
         response = PresentationWithSlides(
-            **presentation.model_dump(),
+            **presentation.model_dump(exclude={"reference_markers"}),
             slides=slides,
+            reference_markers=reference_markers,
+            webSearchResources=tavily_search_results_json,
         )
 
         yield SSECompleteResponse(

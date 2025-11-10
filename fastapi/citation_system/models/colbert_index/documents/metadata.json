@@ -1,0 +1,14 @@
+{
+  "index_name": "documents",
+  "created_at": "2025-11-07T11:39:39.706965",
+  "num_documents": 1,
+  "colbert_model": "colbert-ir/colbertv2.0",
+  "chunk_size": 300,
+  "documents": [
+    {
+      "id": 0,
+      "title": "\u5bc6\u7801\u91cd\u7f6e\u6307\u5357",
+      "text_length": 756
+    }
+  ]
+}

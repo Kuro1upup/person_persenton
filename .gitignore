@@ -1,4 +1,41 @@
-app_data/
-fastapi/chroma/
-fastapi/presenton_backend.egg-info/*
-.idea/*
+# 忽略所有 .pyc 文件
+*.pyc
+
+# 忽略 __pycache__ 目录
+__pycache__/
+
+
+# Python 虚拟环境
+venv/
+.env/
+env/
+ENV/
+myenv/
+# 或者使用通配符忽略所有虚拟环境目录
+*/venv/
+*/.venv/
+
+*/images/
+
+# 其他 Python 相关忽略项
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST

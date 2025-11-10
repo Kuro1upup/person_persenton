@@ -31,6 +31,7 @@ app.include_router(AUTH_ROUTER)
 origins = [
     "http://localhost:9201",
     "http://localhost:9203",
+    "http://localhost:9205",   
     "https://slides.comparegpt.io/",
     # 如果您有其他前端环境，也可以在这里添加，
     # 例如生产环境的域名 "https://your-production-domain.com"

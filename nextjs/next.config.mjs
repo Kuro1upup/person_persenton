@@ -8,23 +8,23 @@ const nextConfig = {
     return [
       {
         source: '/api/v1/auth',
-        destination: 'http://localhost:9202/auth/',
+        destination: 'http://localhost:9204/auth/',
       },
       {
         source: '/api/v1/ppt/:path*',
-        destination: 'http://localhost:9202/api/v1/ppt/:path*',
+        destination: 'http://localhost:9204/api/v1/ppt/:path*',
       },
       {
         source: '/api/v1/auth/:path*',
-        destination: 'http://localhost:9202/auth/:path*',
+        destination: 'http://localhost:9204/auth/:path*',
       },
       {
         source: '/static/:path*',
-        destination: 'http://localhost:9202/static/:path*',
+        destination: 'http://localhost:9204/static/:path*',
       },
       {
         source: '/app_data/:path*',
-        destination: 'http://localhost:9202/app_data/:path*',
+        destination: 'http://localhost:9204/app_data/:path*',
       }
     ];
   },

@@ -1,5 +1,5 @@
 "use client";
-import React, {  useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
@@ -11,7 +11,7 @@ import Header from "./Header";
 import { Button } from "@/components/ui/button";
 import { usePathname } from "next/navigation";
 import { trackEvent, MixpanelEvent } from "@/utils/mixpanel";
-import { AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle, ExternalLink, Loader2 } from "lucide-react";
 import Help from "./Help";
 import {
   usePresentationStreaming,
@@ -24,6 +24,24 @@ import LoadingState from "./LoadingState";
 import { useLayout } from "../../context/LayoutContext";
 import { useFontLoader } from "../../hooks/useFontLoader";
 import { usePresentationUndoRedo } from "../hooks/PresentationUndoRedo";
+
+const formatDebugValue = (value: unknown): string => {
+  // if (value === undefined || value === null) {
+  //   return "—";
+  // }
+
+  // if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+  //   return String(value);
+  // }
+
+  // try {
+  //   const serialized = JSON.stringify(value);
+  //   return serialized.length > 120 ? `${serialized.slice(0, 117)}...` : serialized;
+  // } catch {
+  //   return "[unserializable]";
+  // }
+  return JSON.stringify(value);
+};
 const PresentationPage: React.FC<PresentationPageProps> = ({
   presentation_id,
 }) => {
@@ -35,10 +53,17 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [error, setError] = useState(false);
   const [isMobilePanelOpen, setIsMobilePanelOpen] = useState(false);
+  const [isResourcesPanelOpen, setIsResourcesPanelOpen] = useState(false);
+  const [isMarkersPanelOpen, setIsMarkersPanelOpen] = useState(false);
   const {getCustomTemplateFonts} = useLayout();
  
   const { presentationData, isStreaming } = useSelector(
-    (state: RootState) => state.presentationGeneration
+    (state: RootState) => {
+      console.log("useSelector called, presentationData:", state.presentationGeneration.presentationData);
+      console.log("useSelector webSearchResources:", state.presentationGeneration.presentationData?.webSearchResources);
+      console.log("useSelector reference_markers:", state.presentationGeneration.presentationData?.reference_markers);
+      return state.presentationGeneration;
+    }
   );
 
   // Auto-save functionality
@@ -83,6 +108,96 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
     handleSlideChange(newSlide, presentationData);
   };
 
+  const webSearchResources = useMemo(() => {
+    const rawResources =
+      presentationData?.webSearchResources ??
+      null;
+
+    console.log("PresentationPage - rawResources:", rawResources);
+    console.log("PresentationPage - presentationData:", presentationData);
+
+    if (!rawResources) {
+      console.log("PresentationPage - no rawResources found, returning empty object");
+      return {} as any;
+    }
+
+    if (Array.isArray(rawResources)) {
+      return rawResources.filter(Boolean);
+    }
+
+    if (typeof rawResources === "string") {
+      try {
+        const parsed = JSON.parse(rawResources);
+        if (Array.isArray(parsed)) {
+          return parsed.filter(Boolean);
+        }
+        if (parsed && typeof parsed === "object") {
+          if (Array.isArray(parsed.items)) {
+            return parsed.items.filter(Boolean);
+          }
+          // Return the object directly instead of wrapping in array
+          return parsed;
+        }
+      } catch (error) {
+        console.warn("Failed to parse webSearchResources string", error);
+        return {} as any;
+      }
+    }
+
+    if (typeof rawResources === "object") {
+      if (Array.isArray((rawResources as any).items)) {
+        return (rawResources as any).items.filter(Boolean);
+      }
+      // Return the object directly instead of wrapping in array
+      return rawResources;
+    }
+
+    return {} as any;
+  }, [presentationData]);
+
+
+  const referenceMarkers = useMemo(() => {
+    const rawMarkers = presentationData?.reference_markers ??  null;
+
+    console.log("PresentationPage - rawMarkers:", rawMarkers);
+
+    if (!rawMarkers) {
+      console.log("PresentationPage - no rawMarkers found, returning empty array");
+      return [] as any[];
+    }
+
+    if (Array.isArray(rawMarkers)) {
+      return rawMarkers.filter(Boolean);
+    }
+
+    if (typeof rawMarkers === "string") {
+      try {
+        const parsed = JSON.parse(rawMarkers);
+        if (Array.isArray(parsed)) {
+          return parsed.filter(Boolean);
+        }
+        if (parsed && typeof parsed === "object") {
+          if (Array.isArray(parsed.items)) {
+            return parsed.items.filter(Boolean);
+          }
+          return [parsed];
+        }
+      } catch (error) {
+        console.warn("Failed to parse reference_markers string", error);
+        return [] as any[];
+      }
+    }
+
+    if (typeof rawMarkers === "object") {
+      if (Array.isArray((rawMarkers as any).items)) {
+        return (rawMarkers as any).items.filter(Boolean);
+      }
+      return [rawMarkers];
+    }
+
+    return [] as any[];
+  }, [presentationData]);
+
 
   useEffect(() => {
     if(!loading && !isStreaming && presentationData?.slides && presentationData?.slides.length > 0){  
@@ -126,12 +241,23 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
 
   return (
     <div className="h-screen flex overflow-hidden flex-col">
-      <div className="fixed right-6 top-[5.2rem] z-50">
-        {isSaving && <Loader2 className="w-6 h-6 animate-spin text-blue-500" />}
-      </div>
+
+      {/* Debug Panel - Show in all environments */}
+      {false && (
+        <div className="fixed top-20 right-4 z-50 bg-black bg-opacity-80 text-white p-4 rounded-lg max-w-sm max-h-96 overflow-auto">
+          <h3 className="font-bold mb-2">Debug Info</h3>
+          <div className="text-xs space-y-1">            
+            <div><strong>reference_markers:</strong> {formatDebugValue(presentationData?.reference_markers)}</div>
+            <div><strong>webSearchResources:</strong> {formatDebugValue(presentationData?.webSearchResources)}</div>
+          </div>
+        </div>
+      )}
+     
 
       <Header presentation_id={presentation_id} currentSlide={selectedSlide} />
       <Help />
+
+     
 
       <div
         style={{
@@ -178,6 +304,8 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
                       slide={slide}
                       index={index}
                       presentationId={presentation_id}
+                    referenceMarkers={referenceMarkers}
+                    webSearchResources={webSearchResources}
                     />
                   ))}
               </>

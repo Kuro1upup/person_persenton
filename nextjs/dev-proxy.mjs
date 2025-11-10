@@ -4,8 +4,8 @@ import http from 'http';
 import next from 'next';
 
 const dev = process.env.NODE_ENV !== 'production';
-const port = 9203; // 您前端应用的端口
-const backendTarget = 'http://localhost:9202'; // 您后端服务的地址
+const port = 9205; // 您前端应用的端口
+const backendTarget = 'http://localhost:9204'; // 您后端服务的地址
 const app = next({ dev });
 const handle = app.getRequestHandler();
 

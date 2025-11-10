@@ -35,4 +35,7 @@ export interface Slide {
   speaker_note?: string;
 
   content: SlideContent;
+  referenceMarkers?: {
+    [key: string]: string; // contentType -> markedContent
+  };
 }

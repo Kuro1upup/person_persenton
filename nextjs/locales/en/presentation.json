@@ -35,7 +35,11 @@
         "updating": "Updating...",
         "update": "Update",
         "show_speaker_notes": "Show speaker notes",
-        "speaker_notes": "Speaker notes"
+        "speaker_notes": "Speaker notes",
+        "speaker_note_description": "Speaker note description",
+        "show_reference_markers": "Show reference markers",
+        "reference_markers": "Reference markers",
+        "web_search_resources": "Web search resources"
     },
     "help": {
         "title": "Help Center",

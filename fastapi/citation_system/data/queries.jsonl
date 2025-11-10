@@ -1,0 +1,20 @@
+{"id":"q1","query":"如何重置密码","relevant_docs":["1"],"top_k":3}
+{"id":"q2","query":"忘记密码怎么办","relevant_docs":["1"],"top_k":3}
+{"id":"q3","query":"重置密码的具体步骤是什么","relevant_docs":["1"],"top_k":3}
+{"id":"q4","query":"找不到重置邮件该怎么办","relevant_docs":["1"],"top_k":3}
+{"id":"q5","query":"API 基础 URL 是什么","relevant_docs":["2"],"top_k":3}
+{"id":"q6","query":"API 使用需要什么认证方式","relevant_docs":["2"],"top_k":3}
+{"id":"q7","query":"API 支持哪些数据格式","relevant_docs":["2"],"top_k":3}
+{"id":"q8","query":"如何保护账户安全","relevant_docs":["3","1"],"top_k":3}
+{"id":"q9","query":"如何启用双因素认证提升安全性","relevant_docs":["3"],"top_k":3}
+{"id":"q10","query":"为什么要定期更改密码","relevant_docs":["3"],"top_k":3}
+{"id":"q11","query":"如何联系技术支持","relevant_docs":["4"],"top_k":3}
+{"id":"q12","query":"如何修改个人信息","relevant_docs":["4","5"],"top_k":3}
+{"id":"q13","query":"注册流程是什么","relevant_docs":["4","5"],"top_k":3}
+{"id":"q14","query":"用户指南里包含哪些功能","relevant_docs":["5"],"top_k":3}
+{"id":"q15","query":"如何导出我的数据","relevant_docs":["5"],"top_k":3}
+{"id":"q16","query":"密码设置有哪些建议","relevant_docs":["3","1"],"top_k":3}
+{"id":"q17","query":"登录遇到问题怎么办","relevant_docs":["4","5"],"top_k":3}
+{"id":"q18","query":"如何找回账号","relevant_docs":["1","4"],"top_k":3}
+{"id":"q19","query":"公司是否支持双因素认证","relevant_docs":["3"],"top_k":3}
+{"id":"q20","query":"如何查看 API 文档","relevant_docs":["2","5"],"top_k":3}
