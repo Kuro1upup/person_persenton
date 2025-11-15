@@ -35,7 +35,11 @@
         "updating": "更新中...",
         "update": "更新",
         "show_speaker_notes": "显示备注",
-        "speaker_notes": "备注"
+        "speaker_notes": "备注内容",
+        "speaker_note_description": "备注",
+        "show_reference_markers": "显示引用",
+        "reference_markers": "引用",
+        "web_search_resources": "网络搜索资源"
     },
     "help": {
         "title": "帮助中心",

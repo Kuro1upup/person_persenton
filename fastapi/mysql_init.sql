@@ -24,6 +24,8 @@ CREATE TABLE presentations (
     outline_model JSON NULL,
     presentation_model JSON NULL,
     image_model JSON NULL,
+    tavily_search_results_json JSON NULL,
+    reference_markers JSON NULL,
     INDEX idx_presentations_user_id (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

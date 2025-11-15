@@ -12,6 +12,8 @@ export interface PresentationData {
   n_slides: number;
   title: string;
   slides: any;
+  webSearchResources: any;
+  reference_markers: any;
 }
 
 interface PresentationGenerationState {
@@ -77,8 +79,19 @@ const presentationGenerationSlice = createSlice({
     },
     // Set presentation data
     setPresentationData: (state, action: PayloadAction<PresentationData>) => {
+      // 深度合并数据，保留现有字段，只更新传入的字段
+      // state.presentationData = {
+      //   ...state.presentationData,
+      //   ...action.payload,
+      // };
+      console.log("Redux setPresentationData called with:", action.payload);
+      console.log("Redux webSearchResources in payload:", action.payload?.webSearchResources);
+      console.log("Redux reference_markers in payload:", action.payload?.reference_markers);
+
       state.presentationData = action.payload;
+      console.log("Redux state after setting:", state.presentationData);
     },
+ 
     deleteSlideOutline: (state, action: PayloadAction<{ index: number }>) => {
       if (state.outlines) {
         // Remove the slide at the given index

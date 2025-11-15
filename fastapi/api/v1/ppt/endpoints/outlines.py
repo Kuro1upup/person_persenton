@@ -20,9 +20,11 @@ from models.sse_response import (
 from services.temp_file_service import TEMP_FILE_SERVICE
 from services.database import get_async_session
 from services.documents_loader import DocumentsLoader
-from utils.llm_calls.generate_presentation_outlines import generate_ppt_outline
+from utils.llm_calls.generate_presentation_outlines import generate_ppt_outline, generate_ppt_outline_with_web_search,get_search_results_map
 from utils.ppt_utils import get_presentation_title_from_outlines
 from api.v1.auth.router import get_current_user, get_current_api_key
+from utils.web_search import TavilySearchService
+tavily_search_service = TavilySearchService()
 
 # 创建演示文稿大纲相关的路由器
 OUTLINES_ROUTER = APIRouter(prefix="/outlines", tags=["Outlines"])
@@ -80,8 +82,11 @@ async def stream_outlines(
                 (presentation.n_slides - needed_toc_count) / 10
             )
 
+        tavily_search_results = await tavily_search_service.search(presentation.content)
+        search_content = get_search_results_map(tavily_search_results.get('results', []))
+
         # 调用LLM生成演示文稿大纲，并流式处理返回结果
-        async for chunk in generate_ppt_outline(
+        async for chunk in generate_ppt_outline_with_web_search(
             presentation.content,  # 演示文稿主题/内容
             n_slides_to_generate,  # 需要生成的幻灯片数量
             api_key,  # API密钥
@@ -91,7 +96,7 @@ async def stream_outlines(
             presentation.verbosity,  # 详细程度
             presentation.instructions,  # 额外指令
             presentation.include_title_slide,  # 是否包含标题幻灯片
-            presentation.web_search,  # 是否启用网络搜索
+            tavily_search_results,  # 是否启用网络搜索
             presentation.outline_model,  # 使用的模型
         ):
             # 让出控制权给事件循环，确保其他任务可以执行
@@ -135,7 +140,7 @@ async def stream_outlines(
         # 更新演示文稿的大纲和标题
         presentation.outlines = presentation_outlines.model_dump()
         presentation.title = get_presentation_title_from_outlines(presentation_outlines)
-
+        presentation.tavily_search_results_json = search_content
         # 保存更新后的演示文稿到数据库
         sql_session.add(presentation)
         await sql_session.commit()

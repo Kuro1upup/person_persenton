@@ -16,6 +16,12 @@ const DashboardPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const addReferenceMarker = (data: any) => {
+    // 处理演示文稿数据的引用标记逻辑
+    console.log('Adding reference markers to presentations:', data);
+    // 如果需要特定的处理逻辑，可以在这里添加
+  };
+  
   useEffect(() => {
     const loadData = async () => {
       await fetchPresentations();
@@ -33,6 +39,7 @@ const DashboardPage: React.FC = () => {
           new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
       );
       setPresentations(data);
+      addReferenceMarker(data);
     } catch (err) {
       setError(null);
       setPresentations([]);

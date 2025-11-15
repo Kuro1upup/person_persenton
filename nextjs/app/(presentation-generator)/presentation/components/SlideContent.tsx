@@ -5,6 +5,7 @@ import {
 	Trash2,
 	WandSparkles,
 	StickyNote,
+	BookOpen,
 } from 'lucide-react'
 import {
 	Popover,
@@ -18,6 +19,7 @@ import { PresentationGenerationApi } from '../../services/api/presentation-gener
 import ToolTip from '@/components/ToolTip'
 import { RootState } from '@/store/store'
 import { useDispatch, useSelector } from 'react-redux'
+import { PresentationData } from '@/store/slices/presentationGeneration'
 import {
 	deletePresentationSlide,
 	updateSlide,
@@ -33,17 +35,137 @@ interface SlideContentProps {
 	slide: any
 	index: number
 	presentationId: string
+	referenceMarkers: any[]
+	webSearchResources: any
 }
 
-const SlideContent = ({ slide, index, presentationId }: SlideContentProps) => {
+const SlideContent = ({ slide, index, presentationId, referenceMarkers, webSearchResources }: SlideContentProps) => {
+
+	// Function to render reference markers with linked web search resources
+	const renderReferenceMarkersWithResources = (index?: any,testSlide?: any, testMarkers?: any[], testResources?: any[] | any) => {
+		const markers = testMarkers || referenceMarkers;
+		const resources = testResources || webSearchResources;
+		const slideIndex = testSlide ? testSlide.index : index;
+
+		console.log("=== renderReferenceMarkersWithResources Debug ===");
+		console.log("slide.index:", slideIndex);
+		console.log("referenceMarkers:", markers);
+		console.log("webSearchResources:", resources);
+
+		if (!markers || !Array.isArray(markers)) {
+			console.log("Data validation failed - markers not array");
+			return <p className="text-xs text-red-500">Invalid data format</p>;
+		}
+
+		if (!resources) {
+			console.log("Data validation failed - resources null/undefined");
+			return <p className="text-xs text-red-500">Invalid data format</p>;
+		}
+
+		// Filter reference markers for current slide
+		const slideMarkers = markers.filter((marker: any) =>
+			marker && marker.slide_index === (slideIndex + 1)
+		);
+
+		// Function to filter out garbled text and unwanted characters
+		const filterContent = (text: string) => {
+			if (!text) return text;
+			return text
+				.replace(/[\x00-\x1F\x7F-\x9F]/g, '') // Remove control characters
+				.replace(/[=\-—]{2,}/g, '') // Remove multiple equals signs or dashes
+				.replace(/等+/g, '') // Remove "等" characters
+				.replace(/[^\w\s\u4e00-\u9fff.,!?:;()[\]{}'"]+/g, '') // Keep only letters, numbers, Chinese characters, and common punctuation
+				.replace(/\s+/g, ' ') // Normalize whitespace
+				.trim();
+		};
+
+		// Function to get web resource by index
+		const getWebResource = (resourceIndex: any) => {
+			if (resourceIndex === null || resourceIndex === undefined) return null;
+
+			let webResource = null;
+			if (Array.isArray(resources)) {
+				// Handle array format (original format)
+				webResource = resources[resourceIndex] || null;
+			} else if (typeof resources === 'object' && resources !== null) {
+				// Handle object format with string keys (user's format)
+				const resourceKey = resourceIndex.toString();
+				webResource = resources[resourceKey] || null;
+
+				// Also try with numeric key if string key doesn't work
+				if (!webResource && typeof resourceIndex === 'number') {
+					webResource = resources[resourceIndex] || null;
+				}
+			}
+			return webResource;
+		};
+
+		console.log("Filtered slideMarkers for slide", slideIndex, ":", slideMarkers);
+
+		if (slideMarkers.length === 0) {
+			return <p className="text-xs text-gray-500">No reference markers for this slide (slide.index: {slideIndex})</p>;
+		}
+
+		// Filter out duplicate webResource.title only
+		const seen = new Set();
+		const uniqueMarkers = slideMarkers.filter((marker: any) => {
+			const webResource = getWebResource(marker.reference_marker_index);
+			const key = webResource?.title || '';
+			if (seen.has(key)) {
+				return false;
+			}
+			seen.add(key);
+			return true;
+		});
+
+		console.log("Unique markers after filtering duplicates:", uniqueMarkers);
+
+		return uniqueMarkers.map((marker: any, markerIndex: number) => {
+			const resourceIndex = marker.reference_marker_index;
+			const webResource = getWebResource(resourceIndex);
+
+			console.log(`Marker ${markerIndex}:`, marker.content, "-> reference_marker_index:", marker.reference_marker_index, "-> extracted index:", resourceIndex);
+			console.log(`Web resource for index ${resourceIndex} (type: ${typeof resourceIndex}):`, webResource);
+
+			return (
+				<div key={`marker-${markerIndex}`} className="border-b border-gray-100 pb-2 mb-2 last:border-b-0">
+					<div className="text-sm">
+						{webResource ? (
+							<ToolTip
+								content={webResource.content ? filterContent(webResource.content).match(/.{1,20}/g)?.slice(0, 3)?.join('\n') || filterContent(webResource.content) : 'Open link'}
+								className="text-white bg-black bg-opacity-80 text-left px-2 whitespace-pre-line"
+							>
+								<a
+									href={webResource.url}
+									target="_blank"
+									rel="noopener noreferrer"
+									className="text-blue-500 hover:text-red-600 cursor-pointer text-left font-bold"
+									title=""
+								>
+									{webResource.title.length > 20 ? webResource.title.slice(0, 20) + "..." : webResource.title}
+								</a>
+							</ToolTip>
+						) : (
+							<span className="text-gray-700 text-left">{webResource.title.length > 20 ? webResource.title.slice(0, 20) + "..." : marker.content}</span>
+						)}						
+					</div>
+				
+				</div>
+			);
+		});
+	};
+
 	const dispatch = useDispatch()
 	const { t } = useTranslation('presentation')
 	const [isUpdating, setIsUpdating] = useState(false)
 	const [showNewSlideSelection, setShowNewSlideSelection] = useState(false)
 	const { presentationData, isStreaming } = useSelector(
 		(state: RootState) => state.presentationGeneration
-	)
+	) as { presentationData: PresentationData | null; isStreaming: boolean | null }
 
+	// Get web search resources for reference markers
+	// const webSearchResources = presentationData?.webSearchResources
+	// const reference_markers = presentationData?.reference_markers
 	// Use the centralized group layouts hook
 	const { renderSlideContent, loading } = useTemplateLayouts()
 	const pathname = usePathname()
@@ -313,9 +435,10 @@ const SlideContent = ({ slide, index, presentationId }: SlideContentProps) => {
 							</Popover>
 						</div>
 					)}
-					{/* Speaker Notes */}
-					{!isStreaming && slide?.speaker_note && (
-						<div className="absolute top-2 z-20 sm:top-4 right-8 sm:right-12 hidden md:block transition-transform">
+				{/* Speaker Notes & Reference Markers */}
+				{!isStreaming && (
+					<div className="absolute top-2 right-8 sm:top-4 sm:right-12 hidden md:flex flex-row items-center gap-3 z-20 transition-transform">
+						{slide?.speaker_note && (
 							<Popover>
 								<PopoverTrigger asChild>
 									<div className=" cursor-pointer ">
@@ -340,8 +463,33 @@ const SlideContent = ({ slide, index, presentationId }: SlideContentProps) => {
 									</div>
 								</PopoverContent>
 							</Popover>
-						</div>
-					)}
+						)}
+						<Popover>
+							<PopoverTrigger asChild>
+								<div className=" cursor-pointer ">
+									<ToolTip content={t('slideContent.show_reference_markers')}>
+										<BookOpen className="text-xl text-gray-500" />
+									</ToolTip>
+								</div>
+							</PopoverTrigger>
+							<PopoverContent
+								side="left"
+								align="start"
+								sideOffset={10}
+								className="w-[320px] z-30"
+							>
+								<div className="space-y-2">
+									<p className="text-xs font-bold text-gray-600">
+										{t('slideContent.reference_markers')}
+									</p>
+								<div className="text-sm text-gray-800 whitespace-pre-wrap max-h-64 overflow-auto space-y-2">
+									{renderReferenceMarkersWithResources(slide.index)}
+									</div>
+								</div>
+							</PopoverContent>
+						</Popover>
+					</div>
+				)}
 				</div>
 			</div>
 		</>
